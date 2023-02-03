@@ -254,7 +254,7 @@ EOF
 	
     sleep 3
 
-	mount_point
+    mount_point
 cat << EOF | ${SUDO_CMD} LC_ALL=C chroot ${ROOTFS_NAME} /bin/sh
 if [ -f "/all.sh" ]; then
     chmod a+x /all.sh

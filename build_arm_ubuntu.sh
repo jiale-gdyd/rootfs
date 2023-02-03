@@ -297,7 +297,7 @@ EOF
 	
     sleep 3
 
-	mount_point
+    mount_point
 cat << EOF | ${SUDO_CMD} LC_ALL=C chroot ${ROOTFS_NAME} /bin/sh
 if [ -f "/all.sh" ]; then
     chmod a+x /all.sh
@@ -342,7 +342,7 @@ smbpasswd -a ${SAMBA_USER}
 EOF
     if [ -f "${CUR_DIR}/setup.sh" ]; then
         ${SUDO_CMD} mv ${CUR_DIR}/setup.sh ${ROOTFS_NAME}
-		${SUDO_CMD} chmod a+x ${ROOTFS_NAME}/setup.sh
+        ${SUDO_CMD} chmod a+x ${ROOTFS_NAME}/setup.sh
     fi
 
     echo "切换到构建的ubuntu根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
