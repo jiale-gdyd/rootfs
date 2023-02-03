@@ -26,16 +26,16 @@ function patch()
     sed -i '/:= $(CFLAGS)/a\CFLAGS		+= -Wno-unused-result -Wno-format-truncation -Wno-return-local-addr -Wno-array-bounds -Wno-format-overflow -Wno-maybe-uninitialized' ${CUR_DIR}/${BUSYBOX_SOURCE}/Makefile
     sed -i '/:= $(CFLAGS_busybox)/a\CFLAGS_busybox		+= -Wno-unused-result' ${CUR_DIR}/${BUSYBOX_SOURCE}/Makefile
 
-	sed -i '/if (c >= 0x7f)/{n;s/break;/break;*\//}' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/printable_string.c
-	sed -i 's/if (c >= 0x7f)/\/*if (c >= 0x7f)/' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/printable_string.c
-	sed -i "s/if (c < ' ' || c >= 0x7f)/if (c < ' ')/" ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/printable_string.c
+    sed -i '/if (c >= 0x7f)/{n;s/break;/break;*\//}' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/printable_string.c
+    sed -i 's/if (c >= 0x7f)/\/*if (c >= 0x7f)/' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/printable_string.c
+    sed -i "s/if (c < ' ' || c >= 0x7f)/if (c < ' ')/" ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/printable_string.c
 
-	sed -i "s/*d++ = (c >= ' ' && c < 0x7f) ? c : '?';/*d++ = (c >= ' ') ? c : '?';/" ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/unicode.c
-	sed -i "s/if (c < ' ' || c >= 0x7f)/if (c < ' ')/" ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/unicode.c
+    sed -i "s/*d++ = (c >= ' ' && c < 0x7f) ? c : '?';/*d++ = (c >= ' ') ? c : '?';/" ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/unicode.c
+    sed -i "s/if (c < ' ' || c >= 0x7f)/if (c < ' ')/" ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/unicode.c
 
-	sed -i '/Simplified modutils/{n;s#y#n#;}' ${CUR_DIR}/${BUSYBOX_SOURCE}/modutils/Config.src
-	sed -i '/vi-style line editing commands/{n;s#n#y#;}' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/Config.src
-	sed -i '/Check $LC_ALL, $LC_CTYPE and $LANG environment variables/{n;s#n#y#;}' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/Config.src
+    sed -i '/Simplified modutils/{n;s#y#n#;}' ${CUR_DIR}/${BUSYBOX_SOURCE}/modutils/Config.src
+    sed -i '/vi-style line editing commands/{n;s#n#y#;}' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/Config.src
+    sed -i '/Check $LC_ALL, $LC_CTYPE and $LANG environment variables/{n;s#n#y#;}' ${CUR_DIR}/${BUSYBOX_SOURCE}/libbb/Config.src
 }
 
 function busybox()

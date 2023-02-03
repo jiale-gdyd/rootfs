@@ -35,13 +35,13 @@ NETCARD1_BOARDCAST=192.168.1.255
 
 function host_dep()
 {
-	sudo apt update
-	sudo apt-get install qemu-user-static qemu-system-arm debootstrap multistrap -y
-	sudo update-binfmts --install i386 /usr/bin/qemu-i386-static --magic '\x7fELF\x01\x01\x01\x03\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x03\x00\x01\x00\x00\x00' --mask '\xff\xff\xff\xff\xff\xff\xff\xfc\xff\xff\xff\xff\xff\xff\xff\xff\xf8\xff\xff\xff\xff\xff\xff\xff'
-	sudo service binfmt-support start
-	sudo dpkg --add-architecture i386 -y
-	sudo apt update
-	sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386 -y
+    sudo apt update
+    sudo apt-get install qemu-user-static qemu-system-arm debootstrap multistrap -y
+    sudo update-binfmts --install i386 /usr/bin/qemu-i386-static --magic '\x7fELF\x01\x01\x01\x03\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x03\x00\x01\x00\x00\x00' --mask '\xff\xff\xff\xff\xff\xff\xff\xfc\xff\xff\xff\xff\xff\xff\xff\xff\xf8\xff\xff\xff\xff\xff\xff\xff'
+    sudo service binfmt-support start
+    sudo dpkg --add-architecture i386 -y
+    sudo apt update
+    sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386 -y
 }
 
 function mount_point()
@@ -51,7 +51,7 @@ function mount_point()
     ${SUDO_CMD} mount -t sysfs /sysfs ${ROOTFS_NAME}/sys
     ${SUDO_CMD} mount -o bind /dev ${ROOTFS_NAME}/dev
     ${SUDO_CMD} mount -o bind /dev/pts ${ROOTFS_NAME}/dev/pts
-	${SUDO_CMD} mount -o bind /tmp ${ROOTFS_NAME}/tmp
+    ${SUDO_CMD} mount -o bind /tmp ${ROOTFS_NAME}/tmp
     echo "mount finished"
 }
 
@@ -60,7 +60,7 @@ function umount_point()
     echo "umount starting"
     ${SUDO_CMD} umount ${ROOTFS_NAME}/proc   
     ${SUDO_CMD} umount ${ROOTFS_NAME}/sys
-	${SUDO_CMD} umount ${ROOTFS_NAME}/dev/pts
+    ${SUDO_CMD} umount ${ROOTFS_NAME}/dev/pts
     ${SUDO_CMD} umount ${ROOTFS_NAME}/dev
     ${SUDO_CMD} umount ${ROOTFS_NAME}/tmp
     echo "umount finished"
@@ -295,7 +295,7 @@ EOF
 
     echo "开始自动化设置参数 ......"
 	
-	sleep 3
+    sleep 3
 
 	mount_point
 cat << EOF | ${SUDO_CMD} LC_ALL=C chroot ${ROOTFS_NAME} /bin/sh
@@ -306,16 +306,16 @@ if [ -f "/all.sh" ]; then
 fi
 EOF
     umount_point
-	cache_clean
+    cache_clean
 
     echo "恭喜您，Ubuntu ${UBUNTU_NAME}构建完成"
-	
-	sleep 3
+
+    sleep 3
 }
 
 function setup()
 {
-	if [ ! -f "/usr/bin/qemu-arm-static" ]; then
+    if [ ! -f "/usr/bin/qemu-arm-static" ]; then
         echo "/usr/bin/qemu-arm-static不存在，请先安装"
         exit 127
     else
@@ -345,16 +345,16 @@ EOF
 		${SUDO_CMD} chmod a+x ${ROOTFS_NAME}/setup.sh
     fi
 
-	echo "切换到构建的ubuntu根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
-	mount_point
-	${SUDO_CMD} chroot ${ROOTFS_NAME}
+    echo "切换到构建的ubuntu根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
+    mount_point
+    ${SUDO_CMD} chroot ${ROOTFS_NAME}
     umount_point
 
-	cache_clean
+    cache_clean
 
     echo "恭喜您，用户自定义设置完成"
-	
-	sleep 3
+
+    sleep 3
 }
 
 function rootfs()
@@ -399,7 +399,7 @@ function all()
 {
     clean
     ubuntu
-	setup
+    setup
     rootfs
 }
 
@@ -409,7 +409,7 @@ function help()
     echo "[OPTION]:"
     echo "==============================="
     echo "  0  clean    清理构建信息"
-	echo "  1  host_dep 安装主机环境"
+    echo "  1  host_dep 安装主机环境"
     echo "  2  ubuntu   开始构建ubuntu"
     echo "  3  rootfs   打包ubuntu镜像"
     echo "  4  all      执行2-3的操作"
