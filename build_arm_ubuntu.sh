@@ -12,7 +12,6 @@ UBUNTU_NAME=jammy
 UBUNTU_VERSION=22.04.1
 UBUNTU_TARPKT_NAME=ubuntu-base-${UBUNTU_VERSION}-base-armhf.tar.gz
 UBUNTU_BASE_URL=${SOFTWARE_SOURCE}/ubuntu-cdimage/ubuntu-base/releases/${UBUNTU_NAME}/release/${UBUNTU_TARPKT_NAME}
-REMOTE_UBUNTU_BASE_FILESIZE=`curl -sI ${UBUNTU_BASE_URL} | grep -i content-length | awk '{print $2}'`
 
 HOSTNAME=imx6ull
 SAMBA_USER=root
@@ -98,6 +97,7 @@ function ubuntu()
         echo "下载${UBUNTU_TARPKT_NAME}完成"
     fi
 
+    REMOTE_UBUNTU_BASE_FILESIZE=`curl -sI ${UBUNTU_BASE_URL} | grep -i content-length | awk '{print $2}'`
     filesize=`ls -l ${CUR_DIR}/${UBUNTU_TARPKT_NAME} | awk '{print $5}'`
     if [ ! -f "${CUR_DIR}/${UBUNTU_TARPKT_NAME}" ] || [ $filesize -ne $REMOTE_UBUNTU_BASE_FILESIZE ]; then
         if [ ! -f "${CUR_DIR}/${UBUNTU_TARPKT_NAME}" ]; then

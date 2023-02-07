@@ -18,7 +18,6 @@ BUSYBOX_VERSION=1.36.0
 BUSYBOX_SOURCE=busybox-${BUSYBOX_VERSION}
 BUSYBOX_TARPKT_NAME=${BUSYBOX_SOURCE}.tar.bz2
 BUSYBOX_TARPKT_URL=https://busybox.net/downloads/${BUSYBOX_TARPKT_NAME}
-REMOTE_BUSYBOX_FILESIZE=`curl -sI ${BUSYBOX_TARPKT_URL} | grep -i content-length | awk '{print $2}'`
 
 function patch()
 {
@@ -49,6 +48,7 @@ function busybox()
         fi
     fi
 
+    REMOTE_BUSYBOX_FILESIZE=`curl -sI ${BUSYBOX_TARPKT_URL} | grep -i content-length | awk '{print $2}'`
     filesize=`ls -l ${CUR_DIR}/${BUSYBOX_TARPKT_NAME} | awk '{print $5}'`
     if [ ! -f "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}" ] || [ $filesize -ne $REMOTE_BUSYBOX_FILESIZE ]; then
         if [ ! -f "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}" ]; then
