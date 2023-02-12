@@ -208,6 +208,7 @@ cat > ${ROOTFS_NAME}/etc/inittab <<EOF
 ::sysinit:/etc/init.d/rcS
 ::respawn:-bin/sh
 ::askfirst:-/bin/sh
+tty1::askfirst:-/bin/sh
 ::restart:/sbin/init
 ::ctrlaltdel:/sbin/reboot
 ::shutdown:/bin/umount -a -r

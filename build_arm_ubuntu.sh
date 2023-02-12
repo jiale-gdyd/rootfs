@@ -81,6 +81,8 @@ function cache_clean()
 
 function ubuntu()
 {
+    sudo service binfmt-support start
+
     if [ -d "${ROOTFS_NAME}" ]; then
         rm -rf ${ROOTFS_NAME}
     fi
@@ -148,7 +150,7 @@ chmod 777 /tmp/
 apt update
 
 apt install apt-transport-https ca-certificates -y
-apt install sudo vim kmod lsof -y
+apt install sudo vim kmod lsof gpiod -y
 apt install net-tools ethtool ifupdown -y
 apt install language-pack-en-base rsyslog -y
 apt install nfs-common samba samba-common openssh-server -y
@@ -294,7 +296,7 @@ EOF
     fi
 
     echo "开始自动化设置参数 ......"
-	
+
     sleep 3
 
     mount_point

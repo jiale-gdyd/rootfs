@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # 在使用WSL时，如果出现PATH有非法字符等，线切换至root用户，再执行脚本
+# sudo apt-get install dosfstools dump parted kpartx
 
-SUDO_CMD=
+SUDO_CMD=sudo
 
 CROSS_TOOLCHAIN_GCC_MAJOR=10
 CROSS_TOOLCHAIN_GCC_MINOR=3
@@ -139,6 +140,10 @@ function patch()
     # 设置root登录密码
     sed -i "/string \"Root password\"/{n;s#default \"\"#default \"${ROOT_LOGIN_PASSWD}\"#;}" ${CUR_DIR}/${BUILDROOT_SOURCE}/system/Config.in
 
+    # 设置ext镜像参数
+    # sed -i "/string \"additional mke2fs options\"/{n;s#default \"-O ^64bit\"#default \"-t ext4 -F -O ^metadata_csum,^64bit\"#;}" ${CUR_DIR}/${BUILDROOT_SOURCE}/fs/ext2/Config.in
+    # echo "BR2_TARGET_ROOTFS_EXT2_SIZE=\"2048M\"" >> ${CUR_DIR}/${BUILDROOT_SOURCE}/configs/${BOARD_CONFIG_FILE}
+
     # 下载第三方库设置
 
     # 开启kmod
@@ -210,14 +215,7 @@ function buildroot()
 
 
     cd ${CUR_DIR}
-    if [ -f "${CUR_DIR}/${BUILDROOT_SOURCE}/output/images/rootfs.tar" ]; then
-        tar -xvf ${CUR_DIR}/${BUILDROOT_SOURCE}/output/images/rootfs.tar -C ${ROOTFS_NAME}
-    fi
-
     echo "构建${CUR_DIR}/${BUILDROOT_SOURCE}完成"
-    if [ -d "${CUR_DIR}/${BUILDROOT_SOURCE}" ]; then
-        ${SUDO_CMD} rm -rf ${CUR_DIR}/${BUILDROOT_SOURCE}
-    fi
 }
 
 function add_files()
@@ -304,14 +302,32 @@ EOF
 function rootfs()
 {
     if [ -d "${ROOTFS_NAME}" ]; then
-        du -h -d 0 ${ROOTFS_NAME}
-        cd ${ROOTFS_NAME}
+        if [ -f "${CUR_DIR}/${BUILDROOT_SOURCE}/output/images/rootfs.tar" ]; then
+            # dd if=/dev/zero of=rootfs.img bs=1M count=2048 && sync
+            # mkfs.ext4 -O ^metadata_csum rootfs.img
 
-        tar -jcvf rootfs.tar.bz2 *
-        mv rootfs.tar.bz2 ${CUR_DIR}
-        cd ${CUR_DIR}
+            # ${SUDO_CMD} mount -t ext4 rootfs.img ${ROOTFS_NAME}/
+            tar -xvf ${CUR_DIR}/${BUILDROOT_SOURCE}/output/images/rootfs.tar -C ${ROOTFS_NAME}
+            add_files
 
-        ls -l -h ${CUR_DIR}/rootfs.tar.bz2
+            # ${SUDO_CMD} umount ${ROOTFS_NAME}/
+
+            # ${SUDO_CMD} e2fsck -p -f rootfs.img
+            # ${SUDO_CMD} resize2fs -M rootfs.img
+
+            du -h -d 0 ${ROOTFS_NAME}
+            cd ${ROOTFS_NAME}
+
+            tar -jcvf rootfs.tar.bz2 *
+            mv rootfs.tar.bz2 ${CUR_DIR}
+            cd ${CUR_DIR}
+
+            ls -l -h ${CUR_DIR}/rootfs.tar.bz2
+        fi
+    fi
+
+    if [ -d "${CUR_DIR}/${BUILDROOT_SOURCE}" ]; then
+        ${SUDO_CMD} rm -rf ${CUR_DIR}/${BUILDROOT_SOURCE}
     fi
 }
 
@@ -332,13 +348,16 @@ function clean()
     if [ -f "${CUR_DIR}/rootfs.tar.bz2" ]; then
         rm -rf ${CUR_DIR}/rootfs.tar.bz2
     fi
+
+    if [ -f "${CUR_DIR}/rootfs.img" ]; then
+        rm -rf ${CUR_DIR}/rootfs.img
+    fi
 }
 
 function all()
 {
     clean
     buildroot
-    add_files
     rootfs
 }
 
@@ -349,9 +368,8 @@ function help()
     echo "====================================="
     echo "  0  clean     清理工程构建信息"
     echo "  1  buildroot 开始构建buildrot"
-    echo "  2  add_files 向构建的rootfs添加文件"
-    echo "  3  rootfs    打包构建的rootfs镜像"
-    echo "  4  all       顺序执行上述1-3的操作"
+    echo "  2  rootfs    打包构建的rootfs镜像"
+    echo "  3  all       顺序执行上述1-2的操作"
     echo "====================================="
 }
 

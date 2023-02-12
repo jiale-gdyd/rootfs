@@ -114,7 +114,7 @@ echo "deb-src ${SOFTWARE_SOURCE} ${DEBIAN_NAME}-backports main contrib non-free"
 
 apt-get update
 apt-get install apt-transport-https ca-certificates -y
-apt-get install sudo vim language-pack-en-base -y
+apt-get install sudo vim language-pack-en-base gpiod -y
 apt-get install net-tools wireless-tools ethtool ifupdown iputils-ping -y
 apt-get install rsyslog htop samba samba-common nfs-common openssh-server ssh -y
 apt-get install wpasupplicant lsof kmod dosfstools systemd -y
