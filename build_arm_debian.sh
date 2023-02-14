@@ -2,6 +2,7 @@
 
 SUDO_CMD=sudo
 CUR_DIR=${PWD}
+source ${CUR_DIR}/buildFuncDefine.sh
 
 # bullseye buster jessie stretch
 DEBIAN_NAME=bullseye
@@ -39,24 +40,24 @@ function host_dep()
 
 function mount_point()
 {
-    echo "mount starting"
+    print_info "mount starting"
     ${SUDO_CMD} mount -t proc /proc ${ROOTFS_NAME}/proc
     ${SUDO_CMD} mount -t sysfs /sys ${ROOTFS_NAME}/sys
     ${SUDO_CMD} mount -o bind /dev ${ROOTFS_NAME}/dev
     ${SUDO_CMD} mount -o bind /dev/pts ${ROOTFS_NAME}/dev/pts
     ${SUDO_CMD} mount -o bind /tmp ${ROOTFS_NAME}/tmp
-    echo "mount finished"
+    print_info "mount finished"
 }
 
 function umount_point()
 {
-    echo "umount starting"
+    print_info "umount starting"
     ${SUDO_CMD} umount ${ROOTFS_NAME}/sys
     ${SUDO_CMD} umount ${ROOTFS_NAME}/proc   
     ${SUDO_CMD} umount ${ROOTFS_NAME}/dev/pts
     ${SUDO_CMD} umount ${ROOTFS_NAME}/dev
     ${SUDO_CMD} umount ${ROOTFS_NAME}/tmp
-    echo "umount finished"
+    print_info "umount finished"
 }
 
 function cache_clean()
@@ -64,7 +65,7 @@ function cache_clean()
     if [ -f "${ROOTFS_NAME}/usr/bin/qemu-arm-static" ]; then
         ${SUDO_CMD} rm -rf ${ROOTFS_NAME}/usr/bin/qemu-arm-static
     fi
-    
+
     ${SUDO_CMD} rm -rf ${ROOTFS_NAME}/var/lib/lists/*
     ${SUDO_CMD} rm -rf ${ROOTFS_NAME}/dev/*
     ${SUDO_CMD} rm -rf ${ROOTFS_NAME}/var/log/*
@@ -75,25 +76,23 @@ function cache_clean()
 
 function debian()
 {
-    echo "开始构建Debian ${DEBIAN_NAME}的第一阶段"
+    print_info "开始构建Debian ${DEBIAN_NAME}的第一阶段"
     ${SUDO_CMD} debootstrap --arch=armhf --foreign --verbose ${DEBIAN_NAME} ${ROOTFS_NAME}/ ${SOFTWARE_SOURCE}
     if [ $? -ne 0 ]; then
-        echo "构建第一阶段失败"
-        exit 127
+        error_exit "构建第一阶段失败"
     fi
-    echo "完成构建Debian ${DEBIAN_NAME}的第一阶段"
+    print_info "完成构建Debian ${DEBIAN_NAME}的第一阶段"
 
     if [ -f "/usr/bin/qemu-arm-static" ]; then
         ${SUDO_CMD} cp /usr/bin/qemu-arm-static ${ROOTFS_NAME}/usr/bin
     fi
 
-    echo "开始构建Debian ${DEBIAN_NAME}的第二阶段"
+    print_info "开始构建Debian ${DEBIAN_NAME}的第二阶段"
     ${SUDO_CMD} DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true LC_ALL=C LANGUAGE=C LANG=C chroot ${ROOTFS_NAME}/ debootstrap/debootstrap --second-stage
     if [ $? -ne 0 ]; then
-        echo "构建第二阶段失败"
-        exit 127;
+        error_exit "构建第二阶段失败"
     fi
-    echo "完成构建Debian ${DEBIAN_NAME}的第二阶段"
+    print_info "完成构建Debian ${DEBIAN_NAME}的第二阶段"
 
 cat > ${CUR_DIR}/operate.sh <<EOF
 #/bin/sh
@@ -250,8 +249,8 @@ EOF
         ${SUDO_CMD} mv ${CUR_DIR}/all.sh ${ROOTFS_NAME}
     fi
 
-    echo "开始自动化设置参数 ......"
-	
+    print_info "开始自动化设置参数 ......"
+
     sleep 3
 
     mount_point
@@ -265,7 +264,7 @@ EOF
     umount_point
     cache_clean
 
-    echo "恭喜您，Debian ${DEBIAN_NAME}构建完成"
+    print_info "恭喜您，Debian ${DEBIAN_NAME}构建完成"
 
     sleep 3
 }
@@ -273,8 +272,7 @@ EOF
 function setup()
 {
     if [ ! -f "/usr/bin/qemu-arm-static" ]; then
-        echo "/usr/bin/qemu-arm-static不存在，请先安装"
-        exit 127
+        error_exit "/usr/bin/qemu-arm-static不存在，请先安装"
     else
         ${SUDO_CMD} cp /usr/bin/qemu-arm-static ${ROOTFS_NAME}/usr/bin 
     fi
@@ -302,7 +300,7 @@ EOF
         ${SUDO_CMD} chmod a+x ${ROOTFS_NAME}/setup.sh
     fi
 
-    echo "切换到构建的debian根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
+    print_info "切换到构建的debian根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
     mount_point
     ${SUDO_CMD} chroot ${ROOTFS_NAME}
     if [ -f "${ROOTFS_NAME}/setup.sh" ]; then
@@ -312,7 +310,7 @@ EOF
 
     cache_clean
 
-    echo "恭喜您，用户自定义设置完成"
+    print_info "恭喜您，用户自定义设置完成"
 
     sleep 3
 }
@@ -358,6 +356,9 @@ function clean()
 function all()
 {
     clean
+
+    print_debian_logo
+
     debian
     setup
     rootfs
@@ -365,6 +366,7 @@ function all()
 
 function help()
 {
+    print_debian_logo
     echo "Usage: $0 [OPTION]"
     echo "[OPTION]"
     echo "===================================="

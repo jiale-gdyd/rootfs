@@ -4,6 +4,7 @@
 
 SUDO_CMD=sudo
 CUR_DIR=${PWD}
+source ${CUR_DIR}/buildFuncDefine.sh
 
 SOFTWARE_SOURCE=http://mirrors.ustc.edu.cn
 
@@ -45,24 +46,24 @@ function host_dep()
 
 function mount_point()
 {
-    echo "mount starting"
+    print_info "mount starting"
     ${SUDO_CMD} mount -t proc /proc ${ROOTFS_NAME}/proc
     ${SUDO_CMD} mount -t sysfs /sysfs ${ROOTFS_NAME}/sys
     ${SUDO_CMD} mount -o bind /dev ${ROOTFS_NAME}/dev
     ${SUDO_CMD} mount -o bind /dev/pts ${ROOTFS_NAME}/dev/pts
     ${SUDO_CMD} mount -o bind /tmp ${ROOTFS_NAME}/tmp
-    echo "mount finished"
+    print_info "mount finished"
 }
 
 function umount_point()
 {
-    echo "umount starting"
+    print_info "umount starting"
     ${SUDO_CMD} umount ${ROOTFS_NAME}/proc   
     ${SUDO_CMD} umount ${ROOTFS_NAME}/sys
     ${SUDO_CMD} umount ${ROOTFS_NAME}/dev/pts
     ${SUDO_CMD} umount ${ROOTFS_NAME}/dev
     ${SUDO_CMD} umount ${ROOTFS_NAME}/tmp
-    echo "umount finished"
+    print_info "umount finished"
 }
 
 function cache_clean()
@@ -90,40 +91,37 @@ function ubuntu()
     mkdir -p ${ROOTFS_NAME}
 
     if [ ! -f "${UBUNTU_TARPKT_NAME}" ]; then
-        echo "开始下载${UBUNTU_TARPKT_NAME}"
+        print_info "开始下载${UBUNTU_TARPKT_NAME}"
         wget ${UBUNTU_BASE_URL}
         if [ $? -ne 0 ]; then
-            echo "下载${UBUNTU_TARPKT_NAME}失败"
-            exit 127
+            error_exit "下载${UBUNTU_TARPKT_NAME}失败"
         fi
-        echo "下载${UBUNTU_TARPKT_NAME}完成"
+        print_info "下载${UBUNTU_TARPKT_NAME}完成"
     fi
 
     REMOTE_UBUNTU_BASE_FILESIZE=`curl -sI ${UBUNTU_BASE_URL} | grep -i content-length | awk '{print $2}'`
     filesize=`ls -l ${CUR_DIR}/${UBUNTU_TARPKT_NAME} | awk '{print $5}'`
     if [ ! -f "${CUR_DIR}/${UBUNTU_TARPKT_NAME}" ] || [ $filesize -ne $REMOTE_UBUNTU_BASE_FILESIZE ]; then
         if [ ! -f "${CUR_DIR}/${UBUNTU_TARPKT_NAME}" ]; then
-            echo "${CUR_DIR}/${UBUNTU_TARPKT_NAME}不存在，可能未下载成功"
+            print_error "${CUR_DIR}/${UBUNTU_TARPKT_NAME}不存在，可能未下载成功"
         else
-            echo "下载下来的${UBUNTU_TARPKT_NAME}大小不合法，期望大小: $REMOTE_UBUNTU_BASE_FILESIZE字节，实际大小: $filesize字节"
+            print_error "下载下来的${UBUNTU_TARPKT_NAME}大小不合法，期望大小: $REMOTE_UBUNTU_BASE_FILESIZE字节，实际大小: $filesize字节"
         fi
 
         exit 127
     else
-        echo "下载下来的${UBUNTU_TARPKT_NAME}大小: $filesize字节, 期望大小: $REMOTE_UBUNTU_BASE_FILESIZE字节"
+        print_info "下载下来的${UBUNTU_TARPKT_NAME}大小: $filesize字节, 期望大小: $REMOTE_UBUNTU_BASE_FILESIZE字节"
     fi
 
-    echo "开始解压缩${UBUNTU_TARPKT_NAME}到${ROOTFS_NAME}"
+    print_info "开始解压缩${UBUNTU_TARPKT_NAME}到${ROOTFS_NAME}"
     tar -xvf ${UBUNTU_TARPKT_NAME} -C ${ROOTFS_NAME}
     if [ $? -ne 0 ]; then
-        echo "解压缩${UBUNTU_TARPKT_NAME}失败"
-        exit 127
+        error_exit "解压缩${UBUNTU_TARPKT_NAME}失败"
     fi
-    echo "解压缩${UBUNTU_TARPKT_NAME}到${ROOTFS_NAME}完成"
+    print_info "解压缩${UBUNTU_TARPKT_NAME}到${ROOTFS_NAME}完成"
 
     if [ ! -f "/usr/bin/qemu-arm-static" ]; then
-        echo "/usr/bin/qemu-arm-static不存在，请先安装"
-        exit 127
+        error_exit "/usr/bin/qemu-arm-static不存在，请先安装"
     else
         ${SUDO_CMD} cp /usr/bin/qemu-arm-static ${ROOTFS_NAME}/usr/bin 
     fi
@@ -295,7 +293,7 @@ EOF
         ${SUDO_CMD} mv ${CUR_DIR}/all.sh ${ROOTFS_NAME}
     fi
 
-    echo "开始自动化设置参数 ......"
+    print_info "开始自动化设置参数 ......"
 
     sleep 3
 
@@ -310,7 +308,7 @@ EOF
     umount_point
     cache_clean
 
-    echo "恭喜您，Ubuntu ${UBUNTU_NAME}构建完成"
+    print_info "恭喜您，Ubuntu ${UBUNTU_NAME}构建完成"
 
     sleep 3
 }
@@ -318,8 +316,7 @@ EOF
 function setup()
 {
     if [ ! -f "/usr/bin/qemu-arm-static" ]; then
-        echo "/usr/bin/qemu-arm-static不存在，请先安装"
-        exit 127
+        error_exit "/usr/bin/qemu-arm-static不存在，请先安装"
     else
         ${SUDO_CMD} cp /usr/bin/qemu-arm-static ${ROOTFS_NAME}/usr/bin 
     fi
@@ -347,7 +344,7 @@ EOF
         ${SUDO_CMD} chmod a+x ${ROOTFS_NAME}/setup.sh
     fi
 
-    echo "切换到构建的ubuntu根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
+    print_info "切换到构建的ubuntu根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
     mount_point
     ${SUDO_CMD} chroot ${ROOTFS_NAME}
     if [ -f "${ROOTFS_NAME}/setup.sh" ]; then
@@ -357,7 +354,7 @@ EOF
 
     cache_clean
 
-    echo "恭喜您，用户自定义设置完成"
+    print_info "恭喜您，用户自定义设置完成"
 
     sleep 3
 }
@@ -403,6 +400,9 @@ function clean()
 function all()
 {
     clean
+
+    print_ubuntu_logo
+
     ubuntu
     setup
     rootfs
@@ -410,6 +410,7 @@ function all()
 
 function help()
 {
+    print_ubuntu_logo
     echo "Usage: $0 [OPTION]"
     echo "[OPTION]:"
     echo "==============================="

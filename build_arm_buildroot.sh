@@ -4,6 +4,8 @@
 # sudo apt-get install dosfstools dump parted kpartx
 
 SUDO_CMD=sudo
+CUR_DIR=${PWD}
+source ${CUR_DIR}/buildFuncDefine.sh
 
 # arm linaro
 CROSS_TOOLCHAIN_VENDOR=linaro
@@ -29,7 +31,6 @@ else
     CROSS_TOOLCHAIN_PATH=${CROSS_TOOLCHAIN_SUBFIX}_${CROSS_TOOLCHAIN_PREFIX}
 fi
 
-CUR_DIR=${PWD}
 ROOTFS_NAME=${CUR_DIR}/rootfs
 
 BUILDROOT_VERSION=2022.11.1
@@ -171,58 +172,66 @@ function patch()
 function buildroot()
 {
     if [ ! -f "${CUR_DIR}/${BUILDROOT_TARPKT_NAME}" ]; then
-        echo "开始下载${BUILDROOT_TARPKT_NAME}"
+        print_info "开始下载${BUILDROOT_TARPKT_NAME}"
         wget ${BUILDROOT_TARPKT_URL}
         if [ $? -ne 0 ]; then
-            echo "下载${BUILDROOT_TARPKT_NAME}失败"
-            exit 127
+            error_exit "下载${BUILDROOT_TARPKT_NAME}失败"
         fi
     fi
 
+    print_info "正在计算远程包${BUILDROOT_TARPKT_NAME}的大小"
     REMOTE_BUILDROOT_FILESIZE=`curl -sI ${BUILDROOT_TARPKT_URL} | grep -i content-length | awk '{print $2}'`
+    print_info "计算远程包${BUILDROOT_TARPKT_NAME}的大小完成, ${REMOTE_BUILDROOT_FILESIZE}字节"
+
     if [ ! -f "${CUR_DIR}/${BUILDROOT_TARPKT_NAME}" ] || [ $filesize -ne $REMOTE_BUILDROOT_FILESIZE ]; then
         if [ ! -f "${CUR_DIR}/${BUILDROOT_TARPKT_NAME}" ]; then
-            echo "${CUR_DIR}/${BUILDROOT_TARPKT_NAME}不存在，可能未下载成功"
+            print_error "${CUR_DIR}/${BUILDROOT_TARPKT_NAME}不存在，可能未下载成功"
         else
-            echo "下载的${CUR_DIR}/${BUILDROOT_TARPKT_NAME}文件大小不对，期望大小: $REMOTE_BUILDROOT_FILESIZE字节，实际大小: $filesize字节"
+            print_info "下载的${CUR_DIR}/${BUILDROOT_TARPKT_NAME}文件大小不对，期望大小: $REMOTE_BUILDROOT_FILESIZE字节，实际大小: $filesize字节"
         fi
 
         exit 127
     else
-        echo "下载的${BUILDROOT_TARPKT_NAME}大小: $filesize字节，远程中的大小: $REMOTE_BUILDROOT_FILESIZE字节"
+        print_info "下载的${BUILDROOT_TARPKT_NAME}大小: $filesize字节，远程中的大小: $REMOTE_BUILDROOT_FILESIZE字节"
     fi
 
-    echo "开始解压缩${CUR_DIR}/${BUILDROOT_TARPKT_NAME}"
+    print_info "开始解压缩${CUR_DIR}/${BUILDROOT_TARPKT_NAME}"
     tar -xvf ${CUR_DIR}/${BUILDROOT_TARPKT_NAME}
     if [ $? -ne 0 ]; then
-        echo "解压缩${CUR_DIR}/${BUILDROOT_TARPKT_NAME}失败"
-        exit 127
+        error_exit "解压缩${CUR_DIR}/${BUILDROOT_TARPKT_NAME}失败"
     fi
-    echo "解压缩${CUR_DIR}/${BUILDROOT_TARPKT_NAME}完成"
+    print_info "解压缩${CUR_DIR}/${BUILDROOT_TARPKT_NAME}完成"
 
-    echo "开始向${CUR_DIR}/${BUILDROOT_SOURCE}中添加补丁"
-    patch
-    echo "向${CUR_DIR}/${BUILDROOT_SOURCE}中添加补丁完成"
+    if confirm "是否需要添加自定义参数补丁?"; then
+        print_info "开始向${CUR_DIR}/${BUILDROOT_SOURCE}中添加补丁"
+        patch
+        print_info "向${CUR_DIR}/${BUILDROOT_SOURCE}中添加补丁完成"
+    fi
 
-    echo "开始构建${BUILDROOT_SOURCE}"
+    print_info "开始构建${BUILDROOT_SOURCE}"
     cd ${CUR_DIR}/${BUILDROOT_SOURCE}
 
     make ${BOARD_CONFIG_FILE}
-    make menuconfig
-    if [ $? -ne 0 ]; then
-        echo "make menuconfig失败"
-        exit 127
+
+    if confirm "是否需要打开buildroot menuconfig进行参数配置?"; then
+        make menuconfig
+        if [ $? -ne 0 ]; then
+            error_exit "make buildroot menuconfig失败"
+        fi
     fi
 
-    make busybox-menuconfig
-    if [ $? -ne 0 ]; then
-        echo "make busybox-menuconfig失败"
-        exit 127
+    if confirm "是否需要打开bosybox menuconfig进行参数配置?"; then
+        make busybox-menuconfig
+        if [ $? -ne 0 ]; then
+            error_exit "make busybox-menuconfig失败"
+        fi
     fi
+
+    print_info "开始构建buildroot"
 
     ${SUDO_CMD} make
     if [ $? -ne 0 ]; then
-        echo "构建${CUR_DIR}/${BUILDROOT_SOURCE}失败"
+        print_error "构建${CUR_DIR}/${BUILDROOT_SOURCE}失败"
         ${SUDO_CMD} rm -rf ${CUR_DIR}/${BUILDROOT_SOURCE}
         exit 127
     fi
@@ -231,9 +240,8 @@ function buildroot()
         mkdir -p ${ROOTFS_NAME}
     fi
 
-
     cd ${CUR_DIR}
-    echo "构建${CUR_DIR}/${BUILDROOT_SOURCE}完成"
+    print_info "构建${CUR_DIR}/${BUILDROOT_SOURCE}完成"
 }
 
 function add_files()
@@ -375,12 +383,17 @@ function clean()
 function all()
 {
     clean
+
+    print_buildroot_logo
+
     buildroot
     rootfs
 }
 
 function help()
 {
+    print_buildroot_logo
+
     echo "Usage: $0 [OPTION]"
     echo "[OPTION]:"
     echo "====================================="

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 SUDO_CMD=
+CUR_DIR=${PWD}
+source ${CUR_DIR}/buildFuncDefine.sh
 
 # arm linaro
 CROSS_TOOLCHAIN_VENDOR=linaro
@@ -31,7 +33,6 @@ HOME_PATH=root
 NEW_USERNAME=aure
 DEFAULT_GATEWAY=192.168.1.1
 
-CUR_DIR=${PWD}
 ROOTFS_NAME=${CUR_DIR}/rootfs
 
 BUSYBOX_VERSION=1.36.0
@@ -60,73 +61,79 @@ function patch()
 function busybox()
 {
     if [ ! -f "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}" ]; then
-        echo "开始下载${BUSYBOX_TARPKT_NAME}"
+        print_info "开始下载${BUSYBOX_TARPKT_NAME}"
         wget ${BUSYBOX_TARPKT_URL}
         if [ $? -ne 0 ]; then
-            echo "下载${BUSYBOX_TARPKT_NAME}失败"
-            exit 127
+            error_exit "下载${BUSYBOX_TARPKT_NAME}失败"
         fi
     fi
 
+    print_info "正在计算远程包${BUSYBOX_TARPKT_NAME}的大小"
     REMOTE_BUSYBOX_FILESIZE=`curl -sI ${BUSYBOX_TARPKT_URL} | grep -i content-length | awk '{print $2}'`
+    print_info "计算远程包${BUSYBOX_TARPKT_NAME}的大小完成, ${REMOTE_BUSYBOX_FILESIZE}字节"
+
     filesize=`ls -l ${CUR_DIR}/${BUSYBOX_TARPKT_NAME} | awk '{print $5}'`
     if [ ! -f "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}" ] || [ $filesize -ne $REMOTE_BUSYBOX_FILESIZE ]; then
         if [ ! -f "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}" ]; then
-            echo "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}不存在，可能未下载成功"
+            print_error "${CUR_DIR}/${BUSYBOX_TARPKT_NAME}不存在，可能未下载成功"
         else
-            echo "下载的${CUR_DIR}/${BUSYBOX_TARPKT_NAME}文件大小不对，期望大小: $REMOTE_BUSYBOX_FILESIZE字节，实际大小: $filesize字节"
+            print_error "下载的${CUR_DIR}/${BUSYBOX_TARPKT_NAME}文件大小不对，期望大小: $REMOTE_BUSYBOX_FILESIZE字节，实际大小: $filesize字节"
         fi
 
         exit 127
     else
-        echo "下载下来的${BUSYBOX_TARPKT_NAME}大小: $filesize字节, 远程中大小: $REMOTE_BUSYBOX_FILESIZE字节"
+        print_info "下载下来的${BUSYBOX_TARPKT_NAME}大小: $filesize字节, 远程中大小: $REMOTE_BUSYBOX_FILESIZE字节"
     fi
 
-    echo "开始解压缩${BUSYBOX_TARPKT_NAME}"
+    print_info "开始解压缩${BUSYBOX_TARPKT_NAME}"
     tar -jxvf ${CUR_DIR}/${BUSYBOX_TARPKT_NAME}
     if [ $? -ne 0 ]; then
-        echo "解压缩${BUSYBOX_TARPKT_NAME}失败"
-        exit 127
+        error_exit "解压缩${BUSYBOX_TARPKT_NAME}失败"
     fi
-    echo "解压缩${BUSYBOX_TARPKT_NAME}完成"
+    print_info "解压缩${BUSYBOX_TARPKT_NAME}完成"
 
-    echo "开始给${BUSYBOX_SOURCE}添加补丁"
-    patch
-    echo "向${BUSYBOX_SOURCE}添加补丁完成"
+    if confirm "是否需要添加自定义参数补丁?"; then
+        print_info "开始给${BUSYBOX_SOURCE}添加补丁"
+        patch
+        print_info "向${BUSYBOX_SOURCE}添加补丁完成"
+    fi
 
-    echo "开始构建${BUSYBOX_SOURCE}"
+    print_info "开始构建${BUSYBOX_SOURCE}"
     cd ${CUR_DIR}/${BUSYBOX_SOURCE}
-    
+
     export ARCH=arm
     export CROSS_COMPILE=${CROSS_TOOLCHAIN_PATH}/bin/${CROSS_TOOLCHAIN_PREFIX}-
-    
-    make menuconfig
-    if [ $? -ne 0 ]; then
-        echo "make menuconfig失败"
-        exit 127
+
+    if confirm "是否需要打开menuconfig进行参数配置?"; then
+        make menuconfig
+        if [ $? -ne 0 ]; then
+            error_exit "make menuconfig失败"
+        fi
     fi
-    
+
+    print_info "开始构建busybox"
+
     make
     if [ $? -ne 0 ]; then
-        echo "构建${BUSYBOX_SOURCE}失败"
+        print_error "构建${BUSYBOX_SOURCE}失败"
         ${SUDO_CMD} rm -rf ${CUR_DIR}/${BUSYBOX_SOURCE}
         exit 127
     fi
-    
+
     if [ ! -d "${ROOTFS_NAME}" ]; then
         mkdir -p ${ROOTFS_NAME}
     fi
-    
+
     make install CONFIG_PREFIX=${ROOTFS_NAME}
     if [ $? -ne 0 ]; then
-        echo "安装${BUSYBOX_SOURCE}失败"
+        print_error "安装${BUSYBOX_SOURCE}失败"
         ${SUDO_CMD} rm -rf ${BUSYBOX_SOURCE}
         exit 127
     fi
-    
+
     cd ${CUR_DIR}
-    
-    echo "构建${BUSYBOX_SOURCE}完成"
+
+    print_info "构建${BUSYBOX_SOURCE}完成"
     if [ -d "${CUR_DIR}/${BUSYBOX_SOURCE}" ]; then
         ${SUDO_CMD} rm -rf ${CUR_DIR}/${BUSYBOX_SOURCE}
     fi
@@ -361,6 +368,9 @@ function rootfs()
 function all()
 {
     clean
+
+    print_busybox_logo
+
     busybox
     add_files
     rootfs
@@ -368,6 +378,7 @@ function all()
 
 function help()
 {
+    print_busybox_logo
     echo "Usage: $0 [OPTION]"
     echo "[OPTION]:"
     echo "========================================"
