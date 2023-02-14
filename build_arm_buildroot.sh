@@ -5,11 +5,29 @@
 
 SUDO_CMD=sudo
 
-CROSS_TOOLCHAIN_GCC_MAJOR=10
-CROSS_TOOLCHAIN_GCC_MINOR=3
-CROSS_TOOLCHAIN_PREFIX=arm-none-linux-gnueabihf
-CROSS_TOOLCHAIN_SUBFIX=/opt/toolchain/gcc-arm-${CROSS_TOOLCHAIN_GCC_MAJOR}.${CROSS_TOOLCHAIN_GCC_MINOR}-2021.07-x86_64
-CROSS_TOOLCHAIN_PATH=${CROSS_TOOLCHAIN_SUBFIX}-${CROSS_TOOLCHAIN_PREFIX}
+# arm linaro
+CROSS_TOOLCHAIN_VENDOR=linaro
+
+CROSS_TOOLCHAIN_YEAR=2022
+CROSS_TOOLCHAIN_MONTH=08
+
+CROSS_TOOLCHAIN_GCC_MAJOR=12
+CROSS_TOOLCHAIN_GCC_MINOR=1
+CROSS_TOOLCHAIN_GCC_PATCH=1
+
+CROSS_TOOLCHAIN_PATH=
+CROSS_TOOLCHAIN_PREFIX=
+CROSS_TOOLCHAIN_SUBFIX=
+
+if [ "$CROSS_TOOLCHAIN_VENDOR" = "arm" ]; then
+    CROSS_TOOLCHAIN_PREFIX=arm-none-linux-gnueabihf
+    CROSS_TOOLCHAIN_SUBFIX=/opt/toolchain/gcc-arm-${CROSS_TOOLCHAIN_GCC_MAJOR}.${CROSS_TOOLCHAIN_GCC_MINOR}-${CROSS_TOOLCHAIN_YEAR}.${CROSS_TOOLCHAIN_MONTH}-x86_64
+    CROSS_TOOLCHAIN_PATH=${CROSS_TOOLCHAIN_SUBFIX}-${CROSS_TOOLCHAIN_PREFIX}
+else
+    CROSS_TOOLCHAIN_PREFIX=arm-linux-gnueabihf
+    CROSS_TOOLCHAIN_SUBFIX=/opt/toolchain/gcc-linaro-${CROSS_TOOLCHAIN_GCC_MAJOR}.${CROSS_TOOLCHAIN_GCC_MINOR}.${CROSS_TOOLCHAIN_GCC_PATCH}-${CROSS_TOOLCHAIN_YEAR}.${CROSS_TOOLCHAIN_MONTH}-x86_64
+    CROSS_TOOLCHAIN_PATH=${CROSS_TOOLCHAIN_SUBFIX}_${CROSS_TOOLCHAIN_PREFIX}
+fi
 
 CUR_DIR=${PWD}
 ROOTFS_NAME=${CUR_DIR}/rootfs
@@ -63,10 +81,10 @@ function get_toolchain_gcc_version()
     find_gcc_version="false"
     gcc_return_str="BR2_TOOLCHAIN_EXTERNAL_GCC_OLD"
 
-    if [ $gcc_major -ge 4 ] && [ $gcc_minor -ge 3 ]; then
+    if [ $gcc_major -ge 4 ]; then
         for ((i=4;i<=20;i++)) do
             if [ $i -lt 5 ]; then
-                for ((j=3;j<=9;j++)) do
+                for ((j=0;j<=9;j++)) do
                     local1_version="$gcc_major.$gcc_minor.x"
                     if [ "$local1_version" = "${i}.${j}.x" ]; then
                         gcc_return_str="BR2_TOOLCHAIN_EXTERNAL_GCC_${i}_${j}"

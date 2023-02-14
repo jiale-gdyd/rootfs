@@ -305,6 +305,9 @@ EOF
     echo "切换到构建的debian根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
     mount_point
     ${SUDO_CMD} chroot ${ROOTFS_NAME}
+    if [ -f "${ROOTFS_NAME}/setup.sh" ]; then
+        ${SUDO_CMD} rm -rf ${ROOTFS_NAME}/setup.sh
+    fi
     umount_point
 
     cache_clean

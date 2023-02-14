@@ -8,8 +8,8 @@ CUR_DIR=${PWD}
 SOFTWARE_SOURCE=http://mirrors.ustc.edu.cn
 
 # bionic focal jammy kinetic trusty xenial
-UBUNTU_NAME=jammy
-UBUNTU_VERSION=22.04.1
+UBUNTU_NAME=kinetic
+UBUNTU_VERSION=22.10
 UBUNTU_TARPKT_NAME=ubuntu-base-${UBUNTU_VERSION}-base-armhf.tar.gz
 UBUNTU_BASE_URL=${SOFTWARE_SOURCE}/ubuntu-cdimage/ubuntu-base/releases/${UBUNTU_NAME}/release/${UBUNTU_TARPKT_NAME}
 
@@ -350,6 +350,9 @@ EOF
     echo "切换到构建的ubuntu根目录，切换后可以安装需要的软件以及继续其他操作，完成后，执行exit推出"
     mount_point
     ${SUDO_CMD} chroot ${ROOTFS_NAME}
+    if [ -f "${ROOTFS_NAME}/setup.sh" ]; then
+        ${SUDO_CMD} rm -rf ${ROOTFS_NAME}/setup.sh
+    fi
     umount_point
 
     cache_clean
