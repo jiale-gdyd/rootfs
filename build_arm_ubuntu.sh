@@ -9,8 +9,8 @@ source ${CUR_DIR}/buildFuncDefine.sh
 SOFTWARE_SOURCE=http://mirrors.ustc.edu.cn
 
 # bionic focal jammy kinetic trusty xenial
-UBUNTU_NAME=kinetic
-UBUNTU_VERSION=22.10
+UBUNTU_NAME=jammy
+UBUNTU_VERSION=22.04.1
 UBUNTU_TARPKT_NAME=ubuntu-base-${UBUNTU_VERSION}-base-armhf.tar.gz
 UBUNTU_BASE_URL=${SOFTWARE_SOURCE}/ubuntu-cdimage/ubuntu-base/releases/${UBUNTU_NAME}/release/${UBUNTU_TARPKT_NAME}
 
@@ -148,7 +148,7 @@ chmod 777 /tmp/
 apt update
 
 apt install apt-transport-https ca-certificates -y
-apt install sudo vim kmod lsof gpiod -y
+apt install sudo vim kmod lsof gpiod i2c-tools -y
 apt install net-tools ethtool ifupdown -y
 apt install language-pack-en-base rsyslog -y
 apt install nfs-common samba samba-common openssh-server -y

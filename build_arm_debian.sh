@@ -4,8 +4,8 @@ SUDO_CMD=sudo
 CUR_DIR=${PWD}
 source ${CUR_DIR}/buildFuncDefine.sh
 
-# bullseye buster jessie stretch
-DEBIAN_NAME=bullseye
+# bookworm bullseye buster jessie stretch
+DEBIAN_NAME=bookworm
 ROOTFS_NAME=${PWD}/rootfs
 SOFTWARE_SOURCE=http://mirrors.ustc.edu.cn/debian/
 
@@ -76,6 +76,8 @@ function cache_clean()
 
 function debian()
 {
+    sudo service binfmt-support start
+
     print_info "开始构建Debian ${DEBIAN_NAME}的第一阶段"
     ${SUDO_CMD} debootstrap --arch=armhf --foreign --verbose ${DEBIAN_NAME} ${ROOTFS_NAME}/ ${SOFTWARE_SOURCE}
     if [ $? -ne 0 ]; then
@@ -113,7 +115,7 @@ echo "deb-src ${SOFTWARE_SOURCE} ${DEBIAN_NAME}-backports main contrib non-free"
 
 apt-get update
 apt-get install apt-transport-https ca-certificates -y
-apt-get install sudo vim language-pack-en-base gpiod -y
+apt-get install sudo vim language-pack-en-base gpiod i2c-tools -y
 apt-get install net-tools wireless-tools ethtool ifupdown iputils-ping -y
 apt-get install rsyslog htop samba samba-common nfs-common openssh-server ssh -y
 apt-get install wpasupplicant lsof kmod dosfstools systemd -y
