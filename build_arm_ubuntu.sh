@@ -19,6 +19,8 @@ SAMBA_USER=root
 NEW_USERNAME=${UBUNTU_NAME}
 ROOTFS_NAME=${CUR_DIR}/rootfs
 
+TIMEZONE=Asia/Shanghai
+
 NETCARD0_NAME=eth0
 NETCARD0_MODE=static
 NETCARD0_IPADDR=192.168.1.100
@@ -147,6 +149,10 @@ echo "deb-src ${SOFTWARE_SOURCE}/ubuntu-ports/ ${UBUNTU_NAME}-updates main multi
 chmod 777 /tmp/
 apt update
 
+export TZ=Asia/Shanghai
+export DEBIAN_FRONTEND=noninteractive
+apt install tzdata -y
+
 apt install apt-transport-https ca-certificates -y
 apt install sudo vim kmod lsof gpiod i2c-tools -y
 apt install net-tools ethtool ifupdown -y
@@ -216,6 +222,18 @@ EOF
         ${SUDO_CMD} mv ${CUR_DIR}/operate2.sh ${ROOTFS_NAME}
     fi
 
+cat > ${CUR_DIR}/operate3.sh <<EOF
+#!/bin/sh
+
+cd /etc
+rm -rf localtime
+ln -s ../usr/share/zoneinfo/${TIMEZONE} localtime
+cd -
+EOF
+    if [ -f "${CUR_DIR}/operate3.sh" ]; then
+        ${SUDO_CMD} mv ${CUR_DIR}/operate3.sh ${ROOTFS_NAME}
+    fi
+
 cat > ${CUR_DIR}/cardmnt.sh <<EOF
 echo "mmcblk[1-9]p[0-9] 0:0 666 @/etc/hotplug/tfcard_insert" > /etc/mdev.conf
 echo "mmcblk[1-9] 0:0 666 \$/etc/hotplug/tfcard_remove\n" >> /etc/mdev.conf
@@ -273,6 +291,12 @@ if [ -f "/operate2.sh" ]; then
     rm -rf /operate2.sh
 fi
 
+if [ -f "/operate3.sh" ]; then
+    chmod a+x /operate3.sh
+    /bin/sh /operate3.sh
+    rm -rf /operate3.sh
+fi
+
 if [ ! -d "/mnt/sdcard" ]; then
     mkdir -p /mnt/sdcard
 fi
@@ -323,6 +347,8 @@ function setup()
 
 cat > ${CUR_DIR}/setup.sh <<EOF
 #!/bin/sh
+
+
 echo "添加新用户开始 ${NEW_USERNAME} ......"
 useradd -s '/bin/bash' -m -G adm,sudo ${NEW_USERNAME}
 echo "添加新用户${NEW_USERNAME}完成"

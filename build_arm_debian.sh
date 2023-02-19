@@ -13,6 +13,8 @@ HOSTNAME=imx6ull
 SAMBA_USER=root
 NEW_USERNAME=${DEBIAN_NAME}
 
+TIMEZONE=Asia/Shanghai
+
 NETCARD0_NAME=eth0
 NETCARD0_MODE=static
 NETCARD0_IPADDR=192.168.1.100
@@ -114,6 +116,11 @@ echo "deb-src ${SOFTWARE_SOURCE} ${DEBIAN_NAME}-updates main contrib non-free" >
 echo "deb-src ${SOFTWARE_SOURCE} ${DEBIAN_NAME}-backports main contrib non-free" >> /etc/apt/sources.list 
 
 apt-get update
+
+export TZ=Asia/Shanghai
+export DEBIAN_FRONTEND=noninteractive
+apt install tzdata -y
+
 apt-get install apt-transport-https ca-certificates -y
 apt-get install sudo vim language-pack-en-base gpiod i2c-tools -y
 apt-get install net-tools wireless-tools ethtool ifupdown iputils-ping -y
@@ -174,6 +181,18 @@ EOF
         ${SUDO_CMD} mv ${CUR_DIR}/operate2.sh ${ROOTFS_NAME}
     fi
 
+cat > ${CUR_DIR}/operate3.sh <<EOF
+#!/bin/sh
+
+cd /etc
+rm -rf localtime
+ln -s ../usr/share/zoneinfo/${TIMEZONE} localtime
+cd -
+EOF
+    if [ -f "${CUR_DIR}/operate3.sh" ]; then
+        ${SUDO_CMD} mv ${CUR_DIR}/operate3.sh ${ROOTFS_NAME}
+    fi
+
 cat > ${CUR_DIR}/cardmnt.sh <<EOF
 echo "mmcblk[1-9]p[0-9] 0:0 666 @/etc/hotplug/tfcard_insert" > /etc/mdev.conf
 echo "mmcblk[1-9] 0:0 666 \$/etc/hotplug/tfcard_remove\n" >> /etc/mdev.conf
@@ -231,6 +250,12 @@ if [ -f "/operate2.sh" ]; then
     rm -rf /operate2.sh
 fi
 
+if [ -f "/operate3.sh" ]; then
+    chmod a+x /operate3.sh
+    /bin/sh /operate3.sh
+    rm -rf /operate3.sh
+fi
+
 if [ ! -d "/mnt/sdcard" ]; then
     mkdir -p /mnt/sdcard
 fi
@@ -246,6 +271,11 @@ if [ -f "/cardmnt.sh" ]; then
     /bin/sh /cardmnt.sh
     rm -rf /cardmnt.sh
 fi
+
+cd /etc
+rm -rf localtime
+ln -s ../usr/share/zoneinfo/${TIMEZONE} localtime
+cd -
 EOF
     if [ -f "${CUR_DIR}/all.sh" ]; then
         ${SUDO_CMD} mv ${CUR_DIR}/all.sh ${ROOTFS_NAME}
